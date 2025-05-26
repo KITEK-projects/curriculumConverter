@@ -1,0 +1,9 @@
+services:
+  parser:
+    image: node:18
+    container_name: parser
+    working_dir: /usr/src/app
+    volumes:
+      - ./dist/src:/usr/src/app
+    command: ["node", "bundle.js"]
+    restart: unless-stopped
