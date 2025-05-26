@@ -1,0 +1,4 @@
+*.xlsx
+all.json
+node_modules
+dist
