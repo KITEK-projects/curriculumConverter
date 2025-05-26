@@ -130,7 +130,8 @@ const writeHeader = (
     offset: number,
     teacherName: string,
     style,
-    textStyle
+    textStyle,
+    sem: string
 ) => {
     ws.cell(1 + offset, 1)
         .string(teacherName)
@@ -148,7 +149,7 @@ const writeHeader = (
         .string("Часы педнагрузки")
         .style(textStyle)
     ws.cell(3 + offset, 3, 3 + offset, 6, true)
-        .string("1 семестр")
+        .string(`${sem[0]} семестр`)
         .style(textStyle)
     ws.cell(4 + offset, 3)
         .string("часы")
@@ -163,7 +164,7 @@ const writeHeader = (
         .string("конс.")
         .style(textStyle)
     ws.cell(3 + offset, 7, 3 + offset, 10, true)
-        .string("2 семестр")
+        .string(`${sem[1]} семестр`)
         .style(textStyle)
     ws.cell(4 + offset, 7)
         .string("часы")
@@ -333,8 +334,11 @@ const buildExcel = (outputPath: string): Promise<void> => {
 
         let offset: number = 0
 
+        const sem = data[0].lessons[0].details.slice(-2).map((el) => el.title[0])
+
         for await (const inputData of data) {
-            writeHeader(ws, offset, inputData.teacherName, style, textStyle)
+            
+            writeHeader(ws, offset, inputData.teacherName, style, textStyle, sem)
 
             let startPosition = 5
 
@@ -382,9 +386,7 @@ const buildExcel = (outputPath: string): Promise<void> => {
 
                     writeCell(startPosition + key + offset, 2, group)
 
-                    const firstSemHours = groupWithThatLesson.details.filter(
-                        (el) => el.title === "1 сем"
-                    )[0].hours
+                    const firstSemHours = groupWithThatLesson.details[5].hours
 
                     let total = 0
 
@@ -393,31 +395,27 @@ const buildExcel = (outputPath: string): Promise<void> => {
                     writeCell(startPosition + key + offset, 3, firstSemHours)
 
                     const hoursBySem = calculateSemHours(
-                        groupWithThatLesson.details.filter(
-                            (el) => el.title === "1 сем"
-                        )[0].hours || 0,
-                        groupWithThatLesson.details.filter(
-                            (el) => el.title === "2 сем"
-                        )[0].hours || 0,
+                        groupWithThatLesson.details[5].hours || 0,
+                        groupWithThatLesson.details[6].hours || 0,
                         groupWithThatLesson.details.filter((el) =>
                             el.title.includes("деление")
                         )[0].hours
                     )
 
-                    if (inputData.teacherName === "Александрия") {
-                        // console.log(
-                        //     hoursBySem,
-                        //     groupWithThatLesson.details.filter(
-                        //         (el) => el.title === "1 сем"
-                        //     )[0].hours || 0,
-                        //     groupWithThatLesson.details.filter(
-                        //         (el) => el.title === "2 сем"
-                        //     )[0].hours || 0,
-                        //     groupWithThatLesson.details.filter((el) =>
-                        //         el.title.includes("деление")
-                        //     )[0].hours
-                        // )
-                    }
+                    // if (inputData.teacherName === "Александрия") {
+                    // console.log(
+                    //     hoursBySem,
+                    //     groupWithThatLesson.details.filter(
+                    //         (el) => el.title === "1 сем"
+                    //     )[0].hours || 0,
+                    //     groupWithThatLesson.details.filter(
+                    //         (el) => el.title === "2 сем"
+                    //     )[0].hours || 0,
+                    //     groupWithThatLesson.details.filter((el) =>
+                    //         el.title.includes("деление")
+                    //     )[0].hours
+                    // )
+                    // }
 
                     total += +hoursBySem[0] || 0
                     total += +hoursBySem[1] || 0
@@ -428,10 +426,8 @@ const buildExcel = (outputPath: string): Promise<void> => {
 
                     writeCell(startPosition + key + offset, 6, "")
 
-                    const hoursBySem2 = groupWithThatLesson.details.filter(
-                        (el) => el.title === "2 сем"
-                    )[0].hours
-
+                    const hoursBySem2 =
+                        groupWithThatLesson.details[6].hours || 0
                     total += +hoursBySem2 || 0
 
                     writeCell(startPosition + key + offset, 7, hoursBySem2)
